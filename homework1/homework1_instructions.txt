@@ -1,0 +1,100 @@
+Homework Assignment 1
+Panagiotis (Panos) Toulis – Chicago Booth BUS 41100 Applied Regression Analysis, Fall 2024
+1 Always Look at Scatter Plots
+The file scatterplots.csv on the course site contains 4 pairs of Xs and Y s. For each pair:
+(a) Compute the correlation.
+(b) Show a scatter plot for each pair along with the least-squares regression line on a 2x2 grid.
+If you were to use these regression models to make a business decision which one would you trust?
+2 The Cost of Popularity
+Load the IMDB dataset imdb small.csv.
+(a) Run a least squares model of gross revenue with respect to “Facebook likes” (measured in
+thousands) of the first actor of the movie, and report the coefficients.
+(b) Give a short interpretation of the slope. Does the sign of the slope agree with your expectation?
+(c) As a social media marketer, how much would you be willing to pay for a ‘superstar’ with 30 million likes on Facebook according to the OLS output? Do you feel confident about this number?
+3 House Flipping
+Suppose that we work at a data-savvy real estate company. Our business is to buy houses that are relatively large but have 2 bedrooms and convert them into having 3 bedrooms by adding one extra room. Our plan is to obtain data on houses that are larger than the median size, were built after 1990, and have either 2 or 3 bedrooms. We will then compare the prices of 3-bedroom houses with the prices of 2-bedroom houses within this subgroup.
+We start with some data wrangling. Load the house price dataset Ames house41100.csv.
+(a) If you haven’t done so, install the super-package in R for data wrangling and visualization:
+     install.packages("tidyverse")
+Then load the package with
+     library("tidyverse")
+(b) Load the Ames dataset into a data frame house as in the slides. Filter the original data and
+retain only the houses that match the criteria defined above. Fill in the dots below
+     house2 = house %>%
+                filter(TotalSF > median(TotalSF), YearBuilt > ..., TotalRoom %in% c(2, 3))
+1
+
+How many houses do we have in the subset? Using summary(), verify that the dataset includes only houses with 2 or 3 bedrooms.
+(c) Now we will calculate the conditional expectation of Price for 2-bed and 3-bed houses. Fill in the dots below:
+    house2 %>% group_by(TotalRoom) %>% summarize(avg_price=mean(...))
+By looking at the output, do you think our business plan is solid? That is, is it worth converting 2-bedroom houses into 3-bedroom houses?
+(d) In (c), we can include the average quality of 2-bed and 3-bed houses in our dataset: TotalRoom avg_price avg_quality
+<int> 12 23
+  <dbl>       <dbl>
+239910.        7.65
+238167.        7.33
+How does this new result affect your answer in (c)? Was our original comparison fair? (e) Write code that produces the results in (d). (Feel free to use ChatGPT/other AI.)
+4 Marginal and Conditional Distributions
+The Covid-19 dataset contains detailed data from the progression of Covid-19 across most countries in the world. A column is a particular measurement and a row is a collection of measurements for a single country at a single date. We will focus on the following columns:
+continent = Continent of the country.
+new cases per million = number of recorded Covid-19 cases at a given date per 1million population.
+Run the following commands:
+covid = read.csv("owid-covid-data.csv")
+df = covid %>% select(continent, new_cases_per_million)
+df = df %>% na.omit %>% filter(nchar(continent) > 1 & new_cases_per_million >= 1)
+(a) Using nrow() and ncol() count how many observations and how many measurement variables are contained in this dataset.
+(b) Which line selects the columns? What does the last line do?
+(c) Plot the marginal distribution of new cases per million as a histogram. Where is the range of values that contains the majority of observations? Does this marginal distribution give information about the continent origin of cases?
+(d) The histogram is not easy to read due to some large values. In such cases, it is a good idea to transform using the log() function:
+     > df = df %>% mutate(log_case_rate=log(new_cases_per_million))
+Inspect df. How was it changed by the above code?
+(e) Plot the histogram of log case rate (i.e., its marginal distirbution). Explain in which way the
+new histogram looks better compared to (b).
+(f) Plot the conditional distribution of log case rate with respect to continent (as boxplots).
+Would you say that continent has forecasting power for log case rate? 2
+
+5 Covid-19 Data Wrangling
+Load the Covid dataset owid-covid-data.csv. Then answer the following questions:
+(a) Show that the location variable does not always represent a country.
+(b) We would like to fix this issue and keep only observations where location correspond to actual countries. To do this, we first need to obtain a list of valid country names. Install and load the following package:
+     install.packages("countries")
+     library(countries)
+Type the command list countries() and verify that this contains a list of 249 valid country names in English. Next, filter the covid dataset by keeping only the observations with a valid country name. Fill in the dots:
+     covid = covid %>% filter(.... %in% list_countries())
+(c) We now calculate the mortality rate of Covid-19 for each country in the new dataset. Execute the following code:
+     covid = covid %>% select(location, total_cases, total_deaths) %>% na.omit
+     covid = covid %>% group_by(location) %>%
+                 summarise(mortality_rate=100*max(total_deaths) / max(total_cases))
+One country has a staggering 25% mortality rate. Which country is it and what is going on?
+6 The Magic of Least Squares
+Here, we will discuss the optimality of least squares. Our data are the following:
+size = c(.8,.9,1,1.1,1.4,1.4,1.5,1.6,1.8,2,2.4,2.5,2.7,3.2,3.5)
+price = c(70,83,74,93,89,58,85,114, 95,100,138,111,124,161,172)
+As in class, our goal is to compute the least squares line of price (response) with respect to size (predictor).
+(a) Use the lm function to calculate the least squares intercept and slope: ols = lm(..)
+We will now test the claim that the OLS residuals are uncorrelated with the predictors as we discussed in class. First, calculate the residuals as follows:
+     e = price - ols$fitted.values
+Verify that these residuals have near 0 correlation with the predictor.
+(b) We will now write a function that given linear model parameters (intercept and slope) it calcu- lates the sum of squared residuals. Execute the following code:
+3
+
+loss = function(param) {
+  Yhat = param[1]+param[2]*size
+  e =  price - Yhat
+  sum(e^2)
+}
+# predictions from model
+# residuals
+# sum of squared residuals
+Execute loss(coef(ols)) and report the sum of squared residuals for the OLS coefficients. (c) Next, calculate your own intercept and slope by eyeballing the data and store in b0 and b1.
+Report the loss for your parameters by executing
+    loss(c(b0, b1))
+Verify that this is larger than what was achieved by OLS.
+(d) Now, we will test the claim that OLS minimizes the squared residual loss for any possible selection of intercept and slope. We will consider multiple combinations of intercept and slope. Execute the following code
+    all_b =  expand.grid(b0=seq(-100, 100, length.out=100),
+                         b1=seq(-100, 100, length.out=100))
+Inspect all b. How many combinations of intercept-slope does this matrix include?
+(e) Now we will calculate the loss function that corresponds to each pair of intercept-slope (b0,
+b1) in the above grid. Execute the following code: all_loss = apply(all_b, 1, loss)
+Verify that all loss values that we calculated are larger than the loss of OLS. This shows that the OLS coefficients indeed minimize the sum of squared residuals!
+4
